@@ -48,8 +48,20 @@ void disect_float(float input, short* sign_out, short* exp_out, float* mantis_ou
         reminder /= 2;
         filter >>= 1;
     }
-    *mantis_out = 1.0f;
     float mult = 0.5f;
+    if(*exp_out == -127 && ((*as_int) & filter) == 0) { // denormalised
+        (*exp_out)--;
+        filter >>= 1;
+        while((*as_int & filter) == 0) {
+            (*exp_out)--;
+            filter >>= 1;
+        }
+        mult = 1.0f;
+        *mantis_out = 0.0f;
+    }
+    else {
+        *mantis_out = 1.0f;
+    }
     while(filter != 0) {
         if((*as_int) & filter)
             *mantis_out += mult;
@@ -87,9 +99,13 @@ int main(int argc, char* argv[]) {
     assert(4.0f == powf(2, exp_out) * mantis);
     disect_float(12.0f, &sign, &exp_out, &mantis);
     assert(12.0f == powf(2, exp_out) * mantis);
+    disect_float(-12.0f, &sign, &exp_out, &mantis);
+    assert(-12.0f == sign * powf(2, exp_out) * mantis);
     disect_float(100000000000000000000000000000000000000.0f, &sign, &exp_out, &mantis);
     assert(100000000000000000000000000000000000000.0f == powf(2, exp_out) * mantis);
     disect_float(0.000005f, &sign, &exp_out, &mantis);
     assert(0.000005f == powf(2, exp_out) * mantis);
+    disect_float(10e-41f, &sign, &exp_out, &mantis);
+    assert(10e-41f == powf(2, exp_out) * mantis);
     return 0;
 }
