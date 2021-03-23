@@ -52,9 +52,9 @@ void disect_float(float input, short* sign_out, short* exp_out, float* mantis_ou
     if(*exp_out == -127 && ((*as_int) & filter) == 0) { // denormalised
         (*exp_out)--;
         filter >>= 1;
-        while((*as_int & filter) == 0) {
+        while((*as_int & filter) == 0 && filter != 0) {
             (*exp_out)--;
-            filter >>= 1;
+            filter /= 2;
         }
         mult = 1.0f;
         *mantis_out = 0.0f;
@@ -93,6 +93,8 @@ int main(int argc, char* argv[]) {
     printf("Recreated number: %.6e\n" , sign * powf(2, exp_out) * mantis);
 
     //TESTS
+    disect_float(0.0f, &sign, &exp_out, &mantis);
+    assert(0.0f == sign * powf(2, exp_out) * mantis);
     disect_float(3.75f, &sign, &exp_out, &mantis);
     assert(3.75f == powf(2, exp_out) * mantis);
     disect_float(4.0f, &sign, &exp_out, &mantis);
