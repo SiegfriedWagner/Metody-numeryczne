@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     matrix mat = create_matrix(eq_num, eq_num), L = create_zero_matrix(eq_num, eq_num), U = create_zero_matrix(eq_num, eq_num), P = create_zero_matrix(eq_num, eq_num);
-    matrix bmat = create_matrix(eq_num, 1);
+    matrix vec1 = create_matrix(eq_num, 1);
     // fill matrix
     for (int row = 0; row < mat.rows; ++row) {
         for (int col = 0; col < mat.cols; ++col) {
@@ -52,30 +52,31 @@ int main(int argc, char *argv[]) {
         }
     }
     // fill b vector
-    for (int row = 0; row < bmat.rows; ++row) {
-        for (int col = 0; col < bmat.cols; ++col) {
+    for (int row = 0; row < vec1.rows; ++row) {
+        for (int col = 0; col < vec1.cols; ++col) {
             float val = 0.0f;
             if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
                 printf("Error during parsing matrix at (%i, %i)", row, col);
                 return 2;
             }
-            bmat.data[row][col] = val;
+            vec1.data[row][col] = val;
         }
     }
     printMatrix(mat);
-    printMatrix(bmat);
+    printMatrix(vec1);
     doolitleLUP(mat, L, U, P);
-    matrix y = create_zero_matrix(eq_num, 1);
-    solve_forward(L, bmat, y);
-    matrix xprim = create_zero_matrix(eq_num, 1);
-    solve_backward(U, y, xprim);
+    matrix vec2 = create_zero_matrix(eq_num, 1);
+    solve_forward(L, vec1, vec2);
+    solve_backward(U, vec2, vec1);
     printf("\n");
     transposeInplace(P);
-    matrix x = matmul(P, xprim);
+    matrix x = matmul(P, vec1);
     printMatrix(x);
     destroy_matrix(L);
     destroy_matrix(U);
     destroy_matrix(P);
     destroy_matrix(mat);
-    destroy_matrix(bmat);
+    destroy_matrix(vec1);
+    destroy_matrix(vec2);
+    destroy_matrix(x);
 }
