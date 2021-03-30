@@ -58,11 +58,22 @@ matrix matmul(matrix a, matrix b) {
 void swap_cols(matrix mat, int a, int b) {
     if (a == b)
         return;
-    float tmp = 0;
+    float tmp;
     for (int i = 0; i < mat.rows; ++i) {
         tmp = mat.data[i][a];
         mat.data[i][a] = mat.data[i][b];
         mat.data[i][b] = tmp;
+    }
+}
+
+void swap_rows(matrix mat, int a, int b) {
+    if (a == b)
+        return;
+    float tmp;
+    for (int i = 0; i < mat.cols; ++i) {
+        tmp = mat.data[a][i];
+        mat.data[a][i] = mat.data[b][i];
+        mat.data[b][i] = tmp;
     }
 }
 
@@ -135,7 +146,7 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
         if(max_index > 0) {
             swap_cols(source, k, max_index);
             swap_cols(U_out, k, max_index);
-            swap_cols(P_out, k, max_index);
+            swap_rows(P_out, k, max_index);
         }
         // fill column
         for (int i = k + 1; i < n; ++i) {
@@ -201,6 +212,7 @@ parsing_result fromFile(FILE* file) {
             };
             return result;
         }
+        buffer[current_buffer_position] = '\0';
         float parsedf = strtof(buffer, NULL);
         if(parsedf == 0.0f && buffer[0] != '0') { // probably invalid value parsed
             parsing_result result = {
