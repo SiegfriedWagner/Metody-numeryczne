@@ -3,6 +3,27 @@
 //
 
 #include "../lib/matrix.h"
+void solve_forward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = 0; row < left.rows; ++row) {
+        float b_val = right.data[row][0];
+        for (int col = 0; col < row; ++col) {
+            b_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = b_val / left.data[row][row];
+    }
+}
+
+void solve_backward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = left.rows - 1; row >= 0 ; --row) {
+        float y_val = right.data[row][0];
+        for (int col = left.cols - 1; col > row; --col) {
+            y_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = y_val / left.data[row][row];
+    }
+}
 
 int main(int argc, char *argv[]) {
     if(argc != 2) {
@@ -45,21 +66,9 @@ int main(int argc, char *argv[]) {
     printMatrix(bmat);
     doolitleLUP(mat, L, U, P);
     matrix y = create_zero_matrix(eq_num, 1);
-    for (int row = 0; row < L.rows; ++row) {
-        float b_val = bmat.data[row][0];
-        for (int col = 0; col < row; ++col) {
-            b_val -= L.data[row][col] * y.data[col][0];
-        }
-        y.data[row][0] = b_val / L.data[row][row];
-    }
+    solve_forward(L, bmat, y);
     matrix xprim = create_zero_matrix(eq_num, 1);
-    for (int row = U.rows - 1; row >= 0 ; --row) {
-        float y_val = y.data[row][0];
-        for (int col = U.cols - 1; col > row; --col) {
-            y_val -= U.data[row][col] * xprim.data[col][0];
-        }
-        xprim.data[row][0] = y_val / U.data[row][row];
-    }
+    solve_backward(U, y, xprim);
     printf("\n");
     transposeInplace(P);
     matrix x = matmul(P, xprim);
