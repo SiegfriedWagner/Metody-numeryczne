@@ -3,27 +3,6 @@
 //
 
 #include "../lib/matrix.h"
-void solve_forward(matrix left, matrix right, matrix output) {
-    assert(right.cols == output.cols && right.rows == output.rows);
-    for (int row = 0; row < left.rows; ++row) {
-        float b_val = right.data[row][0];
-        for (int col = 0; col < row; ++col) {
-            b_val -= left.data[row][col] * output.data[col][0];
-        }
-        output.data[row][0] = b_val / left.data[row][row];
-    }
-}
-
-void solve_backward(matrix left, matrix right, matrix output) {
-    assert(right.cols == output.cols && right.rows == output.rows);
-    for (int row = left.rows - 1; row >= 0 ; --row) {
-        float y_val = right.data[row][0];
-        for (int col = left.cols - 1; col > row; --col) {
-            y_val -= left.data[row][col] * output.data[col][0];
-        }
-        output.data[row][0] = y_val / left.data[row][row];
-    }
-}
 
 int main(int argc, char *argv[]) {
     if(argc != 2) {
@@ -67,11 +46,23 @@ int main(int argc, char *argv[]) {
     doolitleLUP(mat, L, U, P);
     matrix vec2 = create_zero_matrix(eq_num, 1);
     solve_forward(L, vec1, vec2);
+    printf("\nL:\n");
+    printMatrix(L);
+    printf("\nU:\n");
+    printMatrix(U);
+    printf("\nP:\n");
+    printMatrix(P);
+    printf("\nY:\n");
+    printMatrix(vec2);
     solve_backward(U, vec2, vec1);
-    printf("\n");
+    printf("\nX'\n");
+    printMatrix(vec1);
     transposeInplace(P);
     matrix x = matmul(P, vec1);
+    printf("\nX\n");
     printMatrix(x);
+    printf("\nA*P^T*X\n");
+    printMatrix(matmul(matmul(mat, P), x)); // double memory leak
     destroy_matrix(L);
     destroy_matrix(U);
     destroy_matrix(P);

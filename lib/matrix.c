@@ -26,6 +26,17 @@ matrix create_zero_matrix(int rows, int columns) {
     }
     return mat;
 }
+
+matrix copy_matrix(matrix mat) {
+    matrix returned = create_matrix(mat.rows, mat.cols);
+    for (int row = 0; row < mat.rows; ++row) {
+        for (int col = 0; col < mat.cols; ++col) {
+            returned.data[row][col] = mat.data[row][col];
+        }
+    }
+    return returned;
+}
+
 void destroy_matrix(matrix mat) {
     if (mat.data != NULL) {
         for (int i = 0; i < mat.rows; ++i) {
@@ -285,4 +296,26 @@ parsing_code readInt(FILE *file, int *out, char *buffer, const unsigned int buff
         return MATRIX_VALUE_PARSING_ERROR;
     }
     return CORRECT;
+}
+
+void solve_forward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = 0; row < left.rows; ++row) {
+        float b_val = right.data[row][0];
+        for (int col = 0; col < row; ++col) {
+            b_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = b_val / left.data[row][row];
+    }
+}
+
+void solve_backward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = left.rows - 1; row >= 0 ; --row) {
+        float y_val = right.data[row][0];
+        for (int col = left.cols - 1; col > row; --col) {
+            y_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = y_val / left.data[row][row];
+    }
 }

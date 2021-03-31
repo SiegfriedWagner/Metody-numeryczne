@@ -32,6 +32,8 @@ typedef struct parsing_result {
 
 matrix create_matrix(int rows, int columns);
 matrix create_zero_matrix(int rows, int columns);
+matrix copy_matrix(matrix mat);
+//void scale_equation(matrix )
 void destroy_matrix(matrix mat);
 matrix matmul(matrix a, matrix b);
 void transposeInplace(matrix mat);
@@ -41,6 +43,8 @@ void zero_matrix(matrix mat);
 // makes LU decomposition - L matrix and U matrix should be created with appropriate size before calling function
 void doolitleLU(matrix source, matrix L_out, matrix U_out);
 void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out);
+void solve_forward(matrix left, matrix right, matrix output);
+void solve_backward(matrix left, matrix right, matrix output);
 parsing_result fromFile(FILE* file);
 parsing_code readInt(FILE *file, int *out, char *buffer, unsigned int bufferSize);
 parsing_code readFloat(FILE *file, float *out, char *buffer, unsigned int bufferSize);
