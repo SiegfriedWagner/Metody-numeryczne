@@ -14,7 +14,7 @@
 typedef struct matrix {
     const int rows;
     const int cols;
-    float** data;
+    float* const * const data;
 } matrix;
 
 typedef enum parsing_code {
@@ -33,9 +33,12 @@ typedef struct parsing_result {
 matrix create_matrix(int rows, int columns);
 matrix create_zero_matrix(int rows, int columns);
 matrix copy_matrix(matrix mat);
+void copy_values(matrix source, matrix target);
+void copy_column(matrix source, matrix target, int sourceColumn, int targetColumn);
 //void scale_equation(matrix )
 void destroy_matrix(matrix mat);
 matrix matmul(matrix a, matrix b);
+void matmul_h(matrix a, matrix b, matrix output);
 void transposeInplace(matrix mat);
 void swap_cols(matrix mat, int a, int b);
 void swap_rows(matrix mat, int a, int b);
@@ -48,5 +51,6 @@ void solve_backward(matrix left, matrix right, matrix output);
 parsing_result fromFile(FILE* file);
 parsing_code readInt(FILE *file, int *out, char *buffer, unsigned int bufferSize);
 parsing_code readFloat(FILE *file, float *out, char *buffer, unsigned int bufferSize);
+parsing_code equationFromFile(FILE* file, matrix* mat, matrix* vec);
 void printMatrix(matrix mat);
 #endif // MATRIX_H_

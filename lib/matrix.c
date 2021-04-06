@@ -9,21 +9,23 @@ const unsigned short bufferSize = 40;
 
 matrix create_matrix(int rows, int columns) {
     // creates matrix with allocated memory but uninitialized
-    matrix mat = {rows, columns, NULL};
-    mat.data = malloc(sizeof(float*) * rows);
+    float **data = malloc(sizeof(float*) * rows);
+
+    data = malloc(sizeof(float*) * rows);
     for (int i = 0; i < rows; ++i) {
-        mat.data[i] = malloc(sizeof(float ) * columns);
+        data[i] = malloc(sizeof(float ) * columns);
     }
+    matrix mat = { rows, columns, data };
     return mat;
 }
 
 matrix create_zero_matrix(int rows, int columns) {
     // creates matrix with allocated memory but uninitialized
-    matrix mat = {rows, columns, NULL};
-    mat.data = calloc(rows, sizeof(float*));
+    float **data = calloc(rows, sizeof(float*));
     for (int i = 0; i < rows; ++i) {
-        mat.data[i] = calloc(columns, sizeof(float));
+        data[i] = calloc(columns, sizeof(float));
     }
+    matrix mat = {rows, columns, data};
     return mat;
 }
 
@@ -37,33 +39,57 @@ matrix copy_matrix(matrix mat) {
     return returned;
 }
 
+void copy_values(matrix source, matrix target) {
+    assert(source.rows == target.cols);
+    assert(source.cols == target.cols);
+    for (int i = 0; i < source.rows; ++i) {
+        for (int j = 0; j < source.cols; ++j) {
+            target.data[i][j] = source.data[i][j];
+        }
+    }
+}
+
+void copy_column(matrix source, matrix target, int sourceColumn, int targetColumn) {
+    assert(sourceColumn >= 0 && targetColumn >= 0);
+    assert(sourceColumn < source.cols && targetColumn < target.cols);
+    assert(source.rows == target.rows);
+    for (int row = 0; row < source.rows; ++row) {
+        target.data[row][targetColumn] = source.data[row][sourceColumn];
+    }
+}
+
 void destroy_matrix(matrix mat) {
     if (mat.data != NULL) {
         for (int i = 0; i < mat.rows; ++i) {
             if (mat.data[i] != NULL) {
                 free(mat.data[i]);
-                mat.data[i] = NULL;
             }
         }
         free(mat.data);
     }
-    mat.data = NULL;
+    *((int*) &mat.rows) = -1;
+    *((int*) &mat.cols) = -1;
+    *((float***) &mat.data) = NULL;
 }
 
 matrix matmul(matrix a, matrix b) {
     assert(a.cols == b.rows);
     matrix mat = create_matrix(a.rows, b.cols);
-    for (int r = 0; r < mat.rows; ++r) {
-        for (int c = 0; c < mat.cols; ++c) {
-            mat.data[r][c] = 0.0f;
-            for (int i = 0; i < a.cols; ++i) {
-                mat.data[r][c] += a.data[r][i] * b.data[i][c];
-            }
-        }
-    }
+    matmul_h(a, b, mat);
     return mat;
 }
 
+void matmul_h(matrix a, matrix b, matrix output) {
+    assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
+    for (int r = 0; r < output.rows; ++r) {
+        for (int c = 0; c < output.cols; ++c) {
+            output.data[r][c] = 0.0f;
+            for (int i = 0; i < a.cols; ++i) {
+                output.data[r][c] += a.data[r][i] * b.data[i][c];
+            }
+        }
+    }
+}
 void transposeInplace(matrix mat) {
     float temp;
     for (int row = 0; row < mat.rows; ++row) {
@@ -250,6 +276,46 @@ parsing_result fromFile(FILE* file) {
     return result;
 }
 
+parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec)
+{
+    char buffer[bufferSize];
+    int eq_num = 0;
+    if (readInt(file, &eq_num, buffer, bufferSize) != CORRECT){
+        printf("Error while reading equations num");
+        return INVALID_MATRIX_SIZE;
+    }
+    matrix mat_temp = create_matrix(eq_num, eq_num);
+    *((int*) &mat->rows) = mat_temp.rows;
+    *((int*) &mat->cols) = mat_temp.cols;
+    *((float***) &mat->data) = mat_temp.data;
+    matrix vec_temp = create_matrix(eq_num, 1);
+    *((int*) &vec->rows) = vec_temp.rows;
+    *((int*) &vec->cols) = vec_temp.cols;
+    *((float***) &vec->data) = vec_temp.data;
+    // fill matrix
+    for (int row = 0; row < mat->rows; ++row) {
+        for (int col = 0; col < mat->cols; ++col) {
+            float val = 0.0f;
+            if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
+                printf("Error during parsing matrix at (%i, %i)", row, col);
+                return MATRIX_VALUE_PARSING_ERROR;
+            }
+            mat->data[row][col] = val;
+        }
+    }
+    // fill b vector
+    for (int row = 0; row < vec->rows; ++row) {
+        for (int col = 0; col < vec->cols; ++col) {
+            float val = 0.0f;
+            if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
+                printf("Error during parsing matrix at (%i, %i)", row, col);
+                return MATRIX_VALUE_PARSING_ERROR;
+            }
+            vec->data[row][col] = val;
+        }
+    }
+    return CORRECT;
+}
 void printMatrix(matrix mat) {
     for (int i = 0; i < mat.rows; ++i) {
         for (int j = 0; j < mat.cols; ++j) {
