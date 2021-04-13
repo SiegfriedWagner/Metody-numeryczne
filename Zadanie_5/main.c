@@ -28,14 +28,15 @@ int main(int argc, char *argv[]) {
     printMatrix(U);
     printf("\nP:\n");
     printMatrix(P);
-    printf("\nY:\n");
+
     matrix vec2 = create_zero_matrix(vec1.rows, 1);
     solve_forward(L, vec1, vec2);
+    printf("\nY:\n");
     printMatrix(vec2);
     solve_backward(U, vec2, vec1);
     printf("\nX'\n");
     printMatrix(vec1);
-    transposeInplace(P);
+    transpose_inplace(P);
     matrix x = matmul(P, vec1);
     printf("\nX\n");
     printMatrix(x);

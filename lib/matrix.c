@@ -3,9 +3,7 @@
 //
 
 #include "matrix.h"
-
 const unsigned short bufferSize = 40;
-
 
 matrix create_matrix(int rows, int columns) {
     // creates matrix with allocated memory but uninitialized
@@ -90,7 +88,18 @@ void matmul_h(matrix a, matrix b, matrix output) {
         }
     }
 }
-void transposeInplace(matrix mat) {
+
+matrix transpose(matrix mat) {
+    matrix returned = create_matrix(mat.cols, mat.rows);
+    for (int row = 0; row < mat.rows; ++row) {
+        for (int col = 0; col < mat.cols; ++col) {
+            returned.data[col][row] = mat.data[row][col];
+        }
+    }
+    return returned;
+}
+
+void transpose_inplace(matrix mat) {
     float temp;
     for (int row = 0; row < mat.rows; ++row) {
         for (int col = 0; col < row; ++col) {
@@ -128,7 +137,6 @@ void zero_matrix(matrix mat) {
         for (int j = 0; j < mat.cols; ++j)
             mat.data[i][j] = 0.0f;
 }
-
 
 // makes LU decomposition - L matrix and U matrix should be created with appropriate size before calling function
 void doolitleLU(matrix source, matrix L_out, matrix U_out) {
@@ -204,7 +212,96 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
     }
 }
 
-parsing_result fromFile(FILE* file) {
+void solve_forward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = 0; row < left.rows; ++row) {
+        float b_val = right.data[row][0];
+        for (int col = 0; col < row; ++col) {
+            b_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = b_val / left.data[row][row];
+    }
+}
+
+void solve_backward(matrix left, matrix right, matrix output) {
+    assert(right.cols == output.cols && right.rows == output.rows);
+    for (int row = left.rows - 1; row >= 0 ; --row) {
+        float y_val = right.data[row][0];
+        for (int col = left.cols - 1; col > row; --col) {
+            y_val -= left.data[row][col] * output.data[col][0];
+        }
+        output.data[row][0] = y_val / left.data[row][row];
+    }
+}
+
+matrix solve_equation(matrix A, matrix free_terms) {
+    assert(A.cols == free_terms.rows);
+    {
+        matrix L = create_zero_matrix(A.rows, A.cols), U = create_zero_matrix(A.rows, A.cols), P = create_zero_matrix(
+                A.rows, A.cols);
+        doolitleLUP(A, L, U, P);
+        matrix vec2 = create_zero_matrix(free_terms.rows, 1);
+        solve_forward(L, free_terms, vec2);
+        solve_backward(U, vec2, free_terms);
+        transpose_inplace(P);
+        matmul_h(P, free_terms, vec2);
+        destroy_matrix(L);
+        destroy_matrix(U);
+        destroy_matrix(P);
+        return vec2;
+    }
+}
+
+void invert_matrix_inplace(matrix mat) {
+    matrix L = create_zero_matrix(mat.rows, mat.cols), U = create_zero_matrix(mat.rows, mat.cols), P = create_zero_matrix(mat.rows, mat.cols);
+    doolitleLUP(mat, L, U, P);
+    matrix L_inverted = create_zero_matrix(L.rows, L.cols), U_inverted = create_zero_matrix(U.rows, U.cols);
+    matrix supp_vec = create_zero_matrix(L.rows, 1), copy_col_vec = create_zero_matrix(L.rows, 1);
+    // invert L and U
+    for (int col = 0; col < L.cols; ++col) {
+        supp_vec.data[col][0] = 1.0f;
+        solve_forward(L, supp_vec, copy_col_vec);
+        copy_column(copy_col_vec, L_inverted, 0, col);
+        solve_backward(U, supp_vec, copy_col_vec);
+        copy_column(copy_col_vec, U_inverted, 0, col);
+        supp_vec.data[col][0] = 0.0f;
+    }
+    transpose_inplace(P);
+    matmul_h(P, U_inverted, U);
+    matmul_h(U, L_inverted, mat);
+    destroy_matrix(L);
+    destroy_matrix(U);
+    destroy_matrix(P);
+    destroy_matrix(L_inverted);
+    destroy_matrix(U_inverted);
+    destroy_matrix(supp_vec);
+    destroy_matrix(copy_col_vec);
+}
+
+float norm(matrix mat) {
+    // inf
+    float _norm = 0.0f;
+    for (int row = 0; row < mat.rows; ++row) {
+        float colsum = 0.0f;
+        for (int col = 0; col < mat.cols; ++col) {
+            colsum += fabs(mat.data[row][col]);
+        }
+        if (colsum > _norm)
+            _norm = colsum;
+    }
+    return _norm;
+}
+
+float vec_norm(matrix vec) {
+    assert(vec.cols == 1 || vec.rows == 1);
+    float sum = 0.0f;
+    for (int row = 0; row < vec.rows; ++row) {
+        sum += vec.data[row][0];
+    }
+    return sum;
+}
+
+parsing_result from_file(FILE* file) {
     char buffer[bufferSize];
     unsigned short current_buffer_position = 0;
     int character = fgetc(file);
@@ -316,6 +413,7 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec)
     }
     return CORRECT;
 }
+
 void printMatrix(matrix mat) {
     for (int i = 0; i < mat.rows; ++i) {
         for (int j = 0; j < mat.cols; ++j) {
@@ -362,26 +460,4 @@ parsing_code readInt(FILE *file, int *out, char *buffer, const unsigned int buff
         return MATRIX_VALUE_PARSING_ERROR;
     }
     return CORRECT;
-}
-
-void solve_forward(matrix left, matrix right, matrix output) {
-    assert(right.cols == output.cols && right.rows == output.rows);
-    for (int row = 0; row < left.rows; ++row) {
-        float b_val = right.data[row][0];
-        for (int col = 0; col < row; ++col) {
-            b_val -= left.data[row][col] * output.data[col][0];
-        }
-        output.data[row][0] = b_val / left.data[row][row];
-    }
-}
-
-void solve_backward(matrix left, matrix right, matrix output) {
-    assert(right.cols == output.cols && right.rows == output.rows);
-    for (int row = left.rows - 1; row >= 0 ; --row) {
-        float y_val = right.data[row][0];
-        for (int col = left.cols - 1; col > row; --col) {
-            y_val -= left.data[row][col] * output.data[col][0];
-        }
-        output.data[row][0] = y_val / left.data[row][row];
-    }
 }
