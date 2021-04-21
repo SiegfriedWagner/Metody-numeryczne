@@ -4,6 +4,7 @@
 
 #include "matrix.h"
 const unsigned short bufferSize = 40;
+static int last_read_character = '\0';
 
 matrix create_matrix(int rows, int columns) {
     // creates matrix with allocated memory but uninitialized
@@ -37,6 +38,15 @@ matrix copy_matrix(matrix mat) {
     return returned;
 }
 
+void move_matrix(matrix *from, matrix *to) {
+    assert(from->cols > 0 && from->rows > 0);
+    destroy_matrix(*to);
+    *(int*) &to->rows = (int) from->rows;
+    *(int*) &to->cols = (int) from->cols;
+    *(float***) &(to->data) = (float**) from->data;
+    *(float***) &(from->data) = NULL;
+}
+
 void copy_values(matrix source, matrix target) {
     assert(source.rows == target.cols);
     assert(source.cols == target.cols);
@@ -63,7 +73,7 @@ void destroy_matrix(matrix mat) {
                 free(mat.data[i]);
             }
         }
-        free(mat.data);
+        free((float **) mat.data);
     }
     *((int*) &mat.rows) = -1;
     *((int*) &mat.cols) = -1;
@@ -97,6 +107,16 @@ matrix transpose(matrix mat) {
         }
     }
     return returned;
+}
+
+void transpose_h(matrix transposed, matrix output) {
+    assert(transposed.cols == output.rows);
+    assert(transposed.rows == output.cols);
+    for (int row = 0; row < transposed.rows; ++row) {
+        for (int col = 0; col < transposed.cols; ++col) {
+            output.data[col][row] = transposed.data[row][col];
+        }
+    }
 }
 
 void transpose_inplace(matrix mat) {
@@ -293,7 +313,7 @@ float norm(matrix mat) {
 }
 
 float vec_norm(matrix vec) {
-    assert(vec.cols == 1 || vec.rows == 1);
+    assert(vec.cols == 1);
     float sum = 0.0f;
     for (int row = 0; row < vec.rows; ++row) {
         sum += vec.data[row][0];
@@ -303,21 +323,16 @@ float vec_norm(matrix vec) {
 
 parsing_result from_file(FILE* file) {
     char buffer[bufferSize];
-    unsigned short current_buffer_position = 0;
-    int character = fgetc(file);
-    while((isalnum(character) || character == '.') && current_buffer_position < bufferSize) {
-        buffer[current_buffer_position++] = (char) character;
-        character = fgetc(file);
-    }
-    if(current_buffer_position == bufferSize - 1) {
+    int parsed = 0;
+    parsing_code code = readInt(file, &parsed, buffer, bufferSize);
+    if(code != CORRECT)
+    {
         parsing_result result = {
                 .output_matrix = {-1, -1, NULL},
-                .output_code = BUFFER_OVERFLOW
+                .output_code = code
         };
         return result;
     }
-    buffer[current_buffer_position++] = '\0';
-    int parsed = strtol(buffer, NULL, 10);
     if (parsed <= 0L)
     {
         parsing_result result = {
@@ -326,51 +341,40 @@ parsing_result from_file(FILE* file) {
         };
         return result;
     }
-    struct matrix result_matrix = create_matrix(parsed, parsed);
+    matrix result_matrix = create_matrix(parsed, parsed);
     int row = 0;
     int col = 0;
-    current_buffer_position = 0;
-    character = fgetc(file);
+    float parsedf = 0.0f;
     while (!feof(file)) {
-        while ((isalnum(character) || character == '.') && current_buffer_position < bufferSize) {
-            buffer[current_buffer_position++] = (char) character;
-            character = fgetc(file);
+        code = readFloat(file, &parsedf, buffer, bufferSize);
+        if (code != CORRECT)
+        {
+            break;
         }
-        if(current_buffer_position == bufferSize - 1) {
-            parsing_result result = {
-                    .output_matrix = {-1, -1, NULL},
-                    .output_code = BUFFER_OVERFLOW
-            };
-            return result;
-        }
-        buffer[current_buffer_position] = '\0';
-        float parsedf = strtof(buffer, NULL);
-        if(parsedf == 0.0f && buffer[0] != '0') { // probably invalid value parsed
-            parsing_result result = {
-                    .output_matrix = {-1, -1, NULL},
-                    .output_code = MATRIX_VALUE_PARSING_ERROR
-            };
-            return result;
-        }
-        current_buffer_position = 0;
         if (row >= result_matrix.rows || col >=result_matrix.cols) {
-            parsing_result result = {
-                    .output_matrix = {-1, -1, NULL},
-                    .output_code = EXCEED_MATRIX_SIZE
-            };
-            return result;
+            code = EXCEED_MATRIX_SIZE;
+            break;
         }
         result_matrix.data[row][col++] = parsedf;
-        while(isspace(character)) {
-            if(character == '\n') {
+        while(isspace(last_read_character)) {
+            if(last_read_character == '\n') {
                 row++;
                 col = 0;
             }
-            character = getc(file);
+            last_read_character = getc(file);
         }
     }
-    parsing_result result = { .output_matrix = result_matrix, .output_code = CORRECT };
-    return result;
+    if (code != CORRECT)
+    {
+        destroy_matrix(result_matrix);
+        parsing_result result = { .output_matrix = {-1, -1, NULL}, .output_code = code };
+        return result;
+    }
+    else
+    {
+        parsing_result result = { .output_matrix = result_matrix, .output_code = CORRECT };
+        return result;
+    }
 }
 
 parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec)
@@ -382,35 +386,35 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec)
         return INVALID_MATRIX_SIZE;
     }
     matrix mat_temp = create_matrix(eq_num, eq_num);
-    *((int*) &mat->rows) = mat_temp.rows;
-    *((int*) &mat->cols) = mat_temp.cols;
-    *((float***) &mat->data) = mat_temp.data;
     matrix vec_temp = create_matrix(eq_num, 1);
-    *((int*) &vec->rows) = vec_temp.rows;
-    *((int*) &vec->cols) = vec_temp.cols;
-    *((float***) &vec->data) = vec_temp.data;
     // fill matrix
-    for (int row = 0; row < mat->rows; ++row) {
-        for (int col = 0; col < mat->cols; ++col) {
+    for (int row = 0; row < mat_temp.rows; ++row) {
+        for (int col = 0; col < mat_temp.cols; ++col) {
             float val = 0.0f;
             if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
                 printf("Error during parsing matrix at (%i, %i)", row, col);
+                destroy_matrix(mat_temp);
+                destroy_matrix(vec_temp);
                 return MATRIX_VALUE_PARSING_ERROR;
             }
-            mat->data[row][col] = val;
+            mat_temp.data[row][col] = val;
         }
     }
     // fill b vector
-    for (int row = 0; row < vec->rows; ++row) {
-        for (int col = 0; col < vec->cols; ++col) {
+    for (int row = 0; row < vec_temp.rows; ++row) {
+        for (int col = 0; col < vec_temp.cols; ++col) {
             float val = 0.0f;
             if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
                 printf("Error during parsing matrix at (%i, %i)", row, col);
+                destroy_matrix(mat_temp);
+                destroy_matrix(vec_temp);
                 return MATRIX_VALUE_PARSING_ERROR;
             }
-            vec->data[row][col] = val;
+            vec_temp.data[row][col] = val;
         }
     }
+    move_matrix(&mat_temp, mat);
+    move_matrix(&vec_temp, vec);
     return CORRECT;
 }
 
@@ -424,14 +428,13 @@ void printMatrix(matrix mat) {
 }
 
 parsing_code readFloat(FILE* file, float *out, char *buffer, const unsigned  int bufferSize) {
-    int character = fgetc(file);
-    while(!(isalnum(character) || character == '.' || character == '-' || character == '+')) {
-        character = fgetc(file);
+    while(!(isalnum(last_read_character) || last_read_character == '.' || last_read_character == '-' || last_read_character == '+')) {
+        last_read_character = fgetc(file);
     }
     unsigned short current_buffer_position = 0;
-    while ((isalnum(character) || character == '.' || character == '-' || character == '+') && current_buffer_position < bufferSize) {
-        buffer[current_buffer_position++] = (char) character;
-        character = fgetc(file);
+    while ((isalnum(last_read_character) || last_read_character == '.' || last_read_character == '-' || last_read_character == '+') && current_buffer_position < bufferSize) {
+        buffer[current_buffer_position++] = (char) last_read_character;
+        last_read_character = fgetc(file);
     }
     if(current_buffer_position == bufferSize - 1)
         return BUFFER_OVERFLOW;
@@ -444,13 +447,12 @@ parsing_code readFloat(FILE* file, float *out, char *buffer, const unsigned  int
 }
 
 parsing_code readInt(FILE *file, int *out, char *buffer, const unsigned int bufferSize) {
-    int character = fgetc(file);
-    while(!(isalnum(character) || character == '.' || character == '-' || character == '+'))
-        character = fgetc(file);
+    while(!(isalnum(last_read_character) || last_read_character == '.' || last_read_character == '-' || last_read_character == '+'))
+        last_read_character = fgetc(file);
     unsigned short current_buffer_position = 0;
-    while ((isalnum(character) || character == '.' || character == '-' || character == '+') && current_buffer_position < bufferSize) {
-        buffer[current_buffer_position++] = (char) character;
-        character = fgetc(file);
+    while ((isalnum(last_read_character) || last_read_character == '.' || last_read_character == '-' || last_read_character == '+') && current_buffer_position < bufferSize) {
+        buffer[current_buffer_position++] = (char) last_read_character;
+        last_read_character = fgetc(file);
     }
     if(current_buffer_position == bufferSize - 1)
         return BUFFER_OVERFLOW;

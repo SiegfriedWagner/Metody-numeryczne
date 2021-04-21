@@ -38,7 +38,7 @@ parsing_code read_data_points(FILE *file, array *x_out, array *y_out, array *sig
     return code;
 }
 
-float function(float x, int nth_function) {
+float function(float x, float nth_function) {
     return powf(x, nth_function);
 }
 
@@ -60,20 +60,17 @@ int main(int argc, char* argv[]) {
             return 2;
         }
     }
-    // add error to y
-    for (int i = 0; i < y.size; ++i) {
-        y.data[i] += sigma.data[i];
-    }
     matrix A = create_matrix(x.size, degree);
     matrix b = create_matrix(y.size, 1);
     for (int row = 0; row < A.rows; ++row) {
         for (int col = 0; col < A.cols; ++col) {
-            A.data[row][col] = function(x.data[row], col) / sigma.data[row];
+            A.data[row][col] = function(x.data[row], (float) col) / sigma.data[row];
         }
         b.data[row][0] = (y.data[row] ) / sigma.data[row];
     }
+    printf("\nA\n");
     printMatrix(A);
-    printf("\n");
+    printf("\nb\n");
     printMatrix(b);
     matrix AT = transpose(A);
     matrix alpha = matmul(AT, A);
@@ -91,7 +88,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < y.size; ++i) {
         float fun_sum = 0.0f;
         for (int d = 0; d < degree; ++d) {
-            fun_sum += a.data[d][0] * function(x.data[d], d);
+            fun_sum += a.data[d][0] * function(x.data[i], (float) d);
         }
         float temp = (y.data[i] - fun_sum) / sigma.data[i];
         chi += temp * temp;

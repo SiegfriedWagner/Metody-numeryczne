@@ -33,12 +33,14 @@ typedef struct parsing_result {
 matrix create_matrix(int rows, int columns);
 matrix create_zero_matrix(int rows, int columns);
 matrix copy_matrix(matrix mat);
+void move_matrix(matrix *from, matrix *to);
 void copy_values(matrix source, matrix target);
 void copy_column(matrix source, matrix target, int sourceColumn, int targetColumn);
 void destroy_matrix(matrix mat);
 matrix matmul(matrix a, matrix b);
 void matmul_h(matrix a, matrix b, matrix output);
 matrix transpose(matrix mat);
+void transpose_h(matrix transposed, matrix output);
 void transpose_inplace(matrix mat);
 void swap_cols(matrix mat, int a, int b);
 void swap_rows(matrix mat, int a, int b);

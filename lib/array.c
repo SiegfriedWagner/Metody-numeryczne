@@ -2,6 +2,8 @@
 // Created by Mateusz Chojnowski on 13.04.2021.
 //
 #include "array.h"
+#include <assert.h>
+#include <stdio.h>
 
 array create_array(size_t size) {
     float *data = malloc(size * sizeof(float));
@@ -23,9 +25,25 @@ void move_array(array *from, array *to) {
     *((float**) &from->data) = NULL;
 }
 
+float arrdot(array first, array second) {
+    assert(first.size == second.size);
+    float sum = 0.0f;
+    for (int i = 0; i < first.size; ++i) {
+        sum += first.data[i] * second.data[i];
+    }
+    return sum;
+}
+
 void destroy_array(array arr) {
     if (arr.data != NULL)
         free(arr.data);
     *((size_t*) &arr.size) = -1;
     *((float**) &arr.data) = NULL;
+}
+
+void print_array(array arr) {
+    for (int i = 0; i < arr.size; ++i) {
+        printf("%f ", arr.data[i]);
+    }
+    printf("\n");
 }
