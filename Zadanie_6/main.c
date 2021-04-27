@@ -36,22 +36,22 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     printf("A\n");
-    printMatrix(mat);
+    print_matrix(mat);
     matrix A = copy_matrix(mat);
     matrix AINV = copy_matrix(A);
     printf("\nB\n");
-    printMatrix(b);
+    print_matrix(b);
     // calcualtions
     matrix L = create_zero_matrix(mat.rows, mat.cols), U = create_zero_matrix(mat.rows, mat.cols), P = create_zero_matrix(mat.rows, mat.cols);
     doolitleLUP(mat, L, U, P);
     matrix L_inverted = create_zero_matrix(L.rows, L.cols), U_inverted = create_zero_matrix(U.rows, U.cols);
     matrix supp_vec1 = create_zero_matrix(L.rows, 1), supp_vec2 = create_zero_matrix(L.rows, 1);
     printf("\nL\n");
-    printMatrix(L);
+    print_matrix(L);
     printf("\nU\n");
-    printMatrix(U);
+    print_matrix(U);
     printf("\nP'\n");
-    printMatrix(P);
+    print_matrix(P);
     transpose_inplace(P);
     // invert L and U
     for (int col = 0; col < L.cols; ++col) {
@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
         supp_vec1.data[col][0] = 0.0f;
     }
     printf("\nU^(-1)\n");
-    printMatrix(U_inverted);
+    print_matrix(U_inverted);
     printf("\nL^(-1)\n");
-    printMatrix(L_inverted);
+    print_matrix(L_inverted);
     transpose_inplace(P);
     // solve equation
     solve_forward(L, b, supp_vec1);
@@ -76,23 +76,23 @@ int main(int argc, char *argv[]) {
     matmul_h(U, L_inverted, mat); // mat = A^(-1)
     // print result
     printf("\nA^(-1)\n");
-    printMatrix(mat);
+    print_matrix(mat);
     matrix test = matmul(A, mat);
     printf("\nA * A^(-1)\n");
-    printMatrix(test);
+    print_matrix(test);
     printf("\ncond(A) = %f\n", norm(A) * norm(mat));
     printf("\ncond_estimated(A) = %f\n", norm(A) * vec_norm(supp_vec1) / vec_norm(b));
     matmul_h(A, supp_vec1, supp_vec2); // A*x = b
     printf("\nA*x\n");
-    printMatrix(supp_vec2);
+    print_matrix(supp_vec2);
     // scaled
     copy_values(A, mat);
     scaleMatrixWithResultsInplace(mat, b);
     matrix A_scaled = copy_matrix(mat);
     printf("\nA (scaled)\n");
-    printMatrix(mat);
+    print_matrix(mat);
     printf("\nB (scaled)\n");
-    printMatrix(b);
+    print_matrix(b);
     // calcualtions
     zero_matrix(L);
     zero_matrix(U);
@@ -120,15 +120,15 @@ int main(int argc, char *argv[]) {
     matmul_h(P, U_inverted, U);
     matmul_h(U, L_inverted, mat); // mat = A^(-1)
     printf("\nA^(-1)\n");
-    printMatrix(mat);
+    print_matrix(mat);
     matmul_h(A_scaled, mat, test);
     printf("\nA * A^(-1)\n");
-    printMatrix(test);
+    print_matrix(test);
     printf("\ncond(A) = %f\n", norm(A_scaled) * norm(mat));
     printf("\ncond_estimated(A) = %f\n", norm(A_scaled) * vec_norm(supp_vec1) / vec_norm(b));
     matmul_h(A_scaled, supp_vec1, supp_vec2); // A*x = b
     printf("\nA*x\n");
-    printMatrix(supp_vec2);
+    print_matrix(supp_vec2);
 
     destroy_matrix(test);
     destroy_matrix(L);

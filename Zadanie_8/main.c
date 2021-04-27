@@ -71,8 +71,8 @@ void QRdecomposition(matrix A, matrix Q, matrix R) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Missing parameter: matrix file path");
-        printf("Optional parameter: maximum difference between QR and RQ (per matrix value)");
+        printf("Missing parameter: matrix file path\n");
+        printf("Optional parameter: maximum difference between QR and RQ (per matrix value)\n");
         return 1;
     }
     float maximumError = 0.0f;
@@ -97,15 +97,15 @@ int main(int argc, char *argv[]) {
         zero_matrix(Q);
         zero_matrix(R);
         printf("\nA\n");
-        printMatrix(A);
+        print_matrix(A);
         QRdecomposition(A, Q, R);
         printf("\nQ\n");
-        printMatrix(Q);
+        print_matrix(Q);
         printf("\nR\n");
-        printMatrix(R);
+        print_matrix(R);
         matmul_h(Q, R, QR);
         printf("\nQR\n");
-        printMatrix(QR);
+        print_matrix(QR);
         matmul_h(R, Q, A); // RQ
         step++;
         iterate = 1;

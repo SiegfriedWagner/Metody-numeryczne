@@ -8,7 +8,7 @@
 
 void print_bytes(float element)
 {
-    unsigned int* as_int = &element;
+    unsigned int* as_int = (unsigned int *) &element;
     unsigned int filter = 1 << 31;
     int i = 0;
     printf("|");
@@ -28,7 +28,7 @@ void print_bytes(float element)
 }
 
 void disect_float(float input, short* sign_out, short* exp_out, float* mantis_out) {
-    unsigned int* as_int = &input;
+    unsigned int* as_int = (unsigned int*) &input;
     unsigned int filter = 1 << 31;
     if ((*as_int) & filter)
         *sign_out = -1;

@@ -1,5 +1,5 @@
 //
-// Created by mateu on 30.03.2021.
+// Created by Mateusz Chojnowski on 30.03.2021.
 //
 
 #ifndef MATRIX_H_
@@ -22,7 +22,8 @@ typedef enum parsing_code {
     BUFFER_OVERFLOW = 1,
     INVALID_MATRIX_SIZE = 2,
     MATRIX_VALUE_PARSING_ERROR = 3,
-    EXCEED_MATRIX_SIZE = 4
+    EXCEED_MATRIX_SIZE = 4,
+    INVALID_FILE = 5
 } parsing_code;
 
 typedef struct parsing_result {
@@ -58,5 +59,5 @@ parsing_result from_file(FILE* file);
 parsing_code readInt(FILE *file, int *out, char *buffer, unsigned int bufferSize);
 parsing_code readFloat(FILE *file, float *out, char *buffer, unsigned int bufferSize);
 parsing_code equationFromFile(FILE* file, matrix* mat, matrix* vec);
-void printMatrix(matrix mat);
+void print_matrix(matrix mat);
 #endif // MATRIX_H_

@@ -66,21 +66,21 @@ int main(int argc, char* argv[]) {
         for (int col = 0; col < A.cols; ++col) {
             A.data[row][col] = function(x.data[row], (float) col) / sigma.data[row];
         }
-        b.data[row][0] = (y.data[row] ) / sigma.data[row];
+        b.data[row][0] = y.data[row] / sigma.data[row];
     }
     printf("\nA\n");
-    printMatrix(A);
+    print_matrix(A);
     printf("\nb\n");
-    printMatrix(b);
+    print_matrix(b);
     matrix AT = transpose(A);
     matrix alpha = matmul(AT, A);
     printf("\nalpha\n");
-    printMatrix(alpha);
+    print_matrix(alpha);
     matrix alpha_inv = copy_matrix(alpha);
     matrix beta = matmul(AT, b);
     matrix a = solve_equation(alpha, beta);
     printf("\ncoefficients (from lowest to highest)\n");
-    printMatrix(a);
+    print_matrix(a);
     invert_matrix_inplace(alpha_inv);
     printf("\ncond(alpha) = %f\n", norm(alpha) * norm(alpha_inv));
     float chi = 0;
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
     }
     printf("Chi^2 = %f", chi);
     printf("\nCov matrix - alpha^(-1)\n");
-    printMatrix(alpha_inv);
+    print_matrix(alpha_inv);
     destroy_array(x);
     destroy_array(y);
     destroy_array(sigma);

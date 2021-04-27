@@ -7,6 +7,8 @@ const unsigned short bufferSize = 40;
 static int last_read_character = '\0';
 
 matrix create_matrix(int rows, int columns) {
+    assert(rows > 0);
+    assert(columns > 0);
     // creates matrix with allocated memory but uninitialized
     float **data = malloc(sizeof(float*) * rows);
 
@@ -19,6 +21,8 @@ matrix create_matrix(int rows, int columns) {
 }
 
 matrix create_zero_matrix(int rows, int columns) {
+    assert(rows > 0);
+    assert(columns > 0);
     // creates matrix with allocated memory but uninitialized
     float **data = calloc(rows, sizeof(float*));
     for (int i = 0; i < rows; ++i) {
@@ -324,6 +328,14 @@ float vec_norm(matrix vec) {
 parsing_result from_file(FILE* file) {
     char buffer[bufferSize];
     int parsed = 0;
+    if (file == NULL)
+    {
+        parsing_result result = {
+                .output_matrix = { -1, -1, NULL},
+                .output_code = INVALID_FILE
+        };
+        return result;
+    }
     parsing_code code = readInt(file, &parsed, buffer, bufferSize);
     if(code != CORRECT)
     {
@@ -418,7 +430,7 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec)
     return CORRECT;
 }
 
-void printMatrix(matrix mat) {
+void print_matrix(matrix mat) {
     for (int i = 0; i < mat.rows; ++i) {
         for (int j = 0; j < mat.cols; ++j) {
             printf("%f ", mat.data[i][j]);

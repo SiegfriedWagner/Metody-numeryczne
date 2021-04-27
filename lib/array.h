@@ -1,5 +1,5 @@
 //
-// Created by mateu on 13.04.2021.
+// Created by Mateusz Chojnowski on 13.04.2021.
 //
 #include <stdlib.h>
 
@@ -17,4 +17,4 @@ void move_array(array *from, array *to);
 float arrdot(array first, array second);
 void destroy_array(array arr);
 void print_array(array arr);
-#endif //NUMERYCZNE_VECTOR_H
+#endif

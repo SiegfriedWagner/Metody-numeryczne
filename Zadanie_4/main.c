@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
     parsing_result result = from_file(file);
     if(result.output_code == CORRECT) {
         printf("Matrix:\n");
-        printMatrix(result.output_matrix);
+        print_matrix(result.output_matrix);
         matrix L = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
         matrix U = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
         matrix P = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
@@ -26,17 +26,17 @@ int main(int argc, char **argv) {
         doolitleLUP(result.output_matrix, L, U, P);
         //doolitleLU(result.output_matrix, L, U);
         printf("L:\n");
-        printMatrix(L);
+        print_matrix(L);
         printf("U':\n");
-        printMatrix(U);
+        print_matrix(U);
         printf("P:\n");
-        printMatrix(P);
+        print_matrix(P);
         matrix recreated = matmul(L, U);
         printf("L*U'");
-        printMatrix(recreated);
+        print_matrix(recreated);
         matrix LUP = matmul(recreated, P);
         printf("L*U'*P\n");
-        printMatrix(LUP);
+        print_matrix(LUP);
         destroy_matrix(LUP);
         destroy_matrix(L);
         destroy_matrix(U);
