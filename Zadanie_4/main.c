@@ -17,9 +17,9 @@ int main(int argc, char **argv) {
     if(result.output_code == CORRECT) {
         printf("Matrix:\n");
         print_matrix(result.output_matrix);
-        matrix L = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
-        matrix U = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
-        matrix P = create_matrix(result.output_matrix.rows, result.output_matrix.cols);
+        matrix L = mat_create(result.output_matrix.rows, result.output_matrix.cols);
+        matrix U = mat_create(result.output_matrix.rows, result.output_matrix.cols);
+        matrix P = mat_create(result.output_matrix.rows, result.output_matrix.cols);
         zero_matrix(L);
         zero_matrix(U);
         zero_matrix(P);
@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
         print_matrix(U);
         printf("P:\n");
         print_matrix(P);
-        matrix recreated = matmul(L, U);
+        matrix recreated = mat_mul_mat(L, U);
         printf("L*U'");
         print_matrix(recreated);
-        matrix LUP = matmul(recreated, P);
+        matrix LUP = mat_mul_mat(recreated, P);
         printf("L*U'*P\n");
         print_matrix(LUP);
         destroy_matrix(LUP);

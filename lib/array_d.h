@@ -1,21 +1,22 @@
 //
-// Created by Mateusz Chojnowski on 13.04.2021.
+// Created by mateu on 11.05.2021.
 //
 #include <stdlib.h>
 
-#ifndef ARRAY_H
-#define ARRAY_H
+#ifndef NUMERYCZNE_ARRAY_D_H
+#define NUMERYCZNE_ARRAY_D_H
 
 typedef struct array {
     const size_t size;
-    float * const data;
+    double * const data;
 } array;
 
 array create_array(size_t size);
 array create_zero_array(size_t size);
 void move_array(array *from, array *to);
 void zero_array(array arr);
-float arrdot(array first, array second);
+double arrdot(array first, array second);
 void destroy_array(array arr);
 void print_array(array arr);
-#endif
+
+#endif //NUMERYCZNE_ARRAY_D_H

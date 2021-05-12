@@ -37,15 +37,15 @@ int main(int argc, char *argv[]) {
     }
     printf("A\n");
     print_matrix(mat);
-    matrix A = copy_matrix(mat);
-    matrix AINV = copy_matrix(A);
+    matrix A = mat_create_copy(mat);
     printf("\nB\n");
     print_matrix(b);
     // calcualtions
-    matrix L = create_zero_matrix(mat.rows, mat.cols), U = create_zero_matrix(mat.rows, mat.cols), P = create_zero_matrix(mat.rows, mat.cols);
+    matrix L = mat_create_zero(mat.rows, mat.cols), U = mat_create_zero(mat.rows, mat.cols), P = mat_create_zero(
+            mat.rows, mat.cols);
     doolitleLUP(mat, L, U, P);
-    matrix L_inverted = create_zero_matrix(L.rows, L.cols), U_inverted = create_zero_matrix(U.rows, U.cols);
-    matrix supp_vec1 = create_zero_matrix(L.rows, 1), supp_vec2 = create_zero_matrix(L.rows, 1);
+    matrix L_inverted = mat_create_zero(L.rows, L.cols), U_inverted = mat_create_zero(U.rows, U.cols);
+    matrix supp_vec1 = mat_create_zero(L.rows, 1), supp_vec2 = mat_create_zero(L.rows, 1);
     printf("\nL\n");
     print_matrix(L);
     printf("\nU\n");
@@ -70,25 +70,25 @@ int main(int argc, char *argv[]) {
     // solve equation
     solve_forward(L, b, supp_vec1);
     solve_backward(U, supp_vec1, supp_vec2); // supp_vec2 = x_prim
-    matmul_h(P, supp_vec2, supp_vec1); // supp_vec1 = x
+    mat_mul_mat_h(P, supp_vec2, supp_vec1); // supp_vec1 = x
     // calculate A^(-1)
-    matmul_h(P, U_inverted, U);
-    matmul_h(U, L_inverted, mat); // mat = A^(-1)
+    mat_mul_mat_h(P, U_inverted, U);
+    mat_mul_mat_h(U, L_inverted, mat); // mat = A^(-1)
     // print result
     printf("\nA^(-1)\n");
     print_matrix(mat);
-    matrix test = matmul(A, mat);
+    matrix test = mat_mul_mat(A, mat);
     printf("\nA * A^(-1)\n");
     print_matrix(test);
-    printf("\ncond(A) = %f\n", norm(A) * norm(mat));
-    printf("\ncond_estimated(A) = %f\n", norm(A) * vec_norm(supp_vec1) / vec_norm(b));
-    matmul_h(A, supp_vec1, supp_vec2); // A*x = b
+    printf("\ncond(A) = %f\n", mat_norm(A) * mat_norm(mat));
+    printf("\ncond_estimated(A) = %f\n", mat_norm(A) * vec_norm(supp_vec1) / vec_norm(b));
+    mat_mul_mat_h(A, supp_vec1, supp_vec2); // A*x = b
     printf("\nA*x\n");
     print_matrix(supp_vec2);
     // scaled
     copy_values(A, mat);
     scaleMatrixWithResultsInplace(mat, b);
-    matrix A_scaled = copy_matrix(mat);
+    matrix A_scaled = mat_create_copy(mat);
     printf("\nA (scaled)\n");
     print_matrix(mat);
     printf("\nB (scaled)\n");
@@ -115,18 +115,18 @@ int main(int argc, char *argv[]) {
     // solve equation
     solve_forward(L, b, supp_vec1);
     solve_backward(U, supp_vec1, supp_vec2); // supp_vec2 = x_prim
-    matmul_h(P, supp_vec2, supp_vec1); // supp_vec1 = x
+    mat_mul_mat_h(P, supp_vec2, supp_vec1); // supp_vec1 = x
     // calculate A^(-1)
-    matmul_h(P, U_inverted, U);
-    matmul_h(U, L_inverted, mat); // mat = A^(-1)
+    mat_mul_mat_h(P, U_inverted, U);
+    mat_mul_mat_h(U, L_inverted, mat); // mat = A^(-1)
     printf("\nA^(-1)\n");
     print_matrix(mat);
-    matmul_h(A_scaled, mat, test);
+    mat_mul_mat_h(A_scaled, mat, test);
     printf("\nA * A^(-1)\n");
     print_matrix(test);
-    printf("\ncond(A) = %f\n", norm(A_scaled) * norm(mat));
-    printf("\ncond_estimated(A) = %f\n", norm(A_scaled) * vec_norm(supp_vec1) / vec_norm(b));
-    matmul_h(A_scaled, supp_vec1, supp_vec2); // A*x = b
+    printf("\ncond(A) = %f\n", mat_norm(A_scaled) * mat_norm(mat));
+    printf("\ncond_estimated(A) = %f\n", mat_norm(A_scaled) * vec_norm(supp_vec1) / vec_norm(b));
+    mat_mul_mat_h(A_scaled, supp_vec1, supp_vec2); // A*x = b
     printf("\nA*x\n");
     print_matrix(supp_vec2);
 

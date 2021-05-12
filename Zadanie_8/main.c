@@ -1,39 +1,21 @@
 //
 // Created by Mateusz Chojnowski on 20.04.2021.
 //
+#include <assert.h>
+#include <math.h>
 #include "../lib/matrix.h"
 #include "../lib/array.h"
-#include <assert.h>
 
-matrix create_identity_matrix(size_t size) {
-    matrix returned = create_zero_matrix(size, size);
-    for (int i = 0; i < size; ++i) {
-        returned.data[i][i] = 1.0f;
-    }
-    return returned;
-}
-
-
-void diagonal(matrix mat, float diagonal_value) {
-    for (int row = 0; row < mat.rows; ++row) {
-        for (int col = 0; col < mat.cols; ++col) {
-            if (row != col)
-                mat.data[row][col] = 0.0f;
-            else
-                mat.data[row][col] = diagonal_value;
-        }
-    }
-}
 
 void QRdecomposition(matrix A, matrix Q, matrix R) {
     assert(A.rows == Q.rows && A.rows == R.rows);
     assert(A.cols == Q.cols && A.cols == R.cols);
     assert(A.rows == A.cols);
-    matrix A_k = copy_matrix(A);
-    matrix calc_helping_matrix = create_matrix(A.rows, A.cols);
+    matrix A_k = mat_create_copy(A);
+    matrix calc_helping_matrix = mat_create(A.rows, A.cols);
     diagonal(Q, 1.0f);
     array x_k = create_zero_array(A.rows);
-    matrix H = create_identity_matrix(A.rows);
+    matrix H = mat_create_identity(A.rows);
     for (int k = 0; k < A.rows - 1; ++k) {
         for (int i = 0; i < A.rows; ++i) {
             x_k.data[i] = 0.0f;
@@ -57,12 +39,12 @@ void QRdecomposition(matrix A, matrix Q, matrix R) {
             }
         }
         copy_values(Q, calc_helping_matrix);
-        matmul_h(calc_helping_matrix, H, Q);
+        mat_mul_mat_h(calc_helping_matrix, H, Q);
         copy_values(A_k, calc_helping_matrix);
-        matmul_h(H, calc_helping_matrix, A_k);
+        mat_mul_mat_h(H, calc_helping_matrix, A_k);
     }
     transpose_h(Q, calc_helping_matrix); // Q^T
-    matmul_h(calc_helping_matrix, A, R);
+    mat_mul_mat_h(calc_helping_matrix, A, R);
     destroy_matrix(H);
     destroy_array(x_k);
     destroy_matrix(calc_helping_matrix);
@@ -87,9 +69,9 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     matrix A = parsingResult.output_matrix;
-    matrix Q = create_matrix(A.rows, A.cols);
-    matrix R = create_matrix(A.rows, A.cols);
-    matrix QR = create_matrix(A.rows, A.cols);
+    matrix Q = mat_create(A.rows, A.cols);
+    matrix R = mat_create(A.rows, A.cols);
+    matrix QR = mat_create(A.rows, A.cols);
     int step = 0;
     int iterate = 1;
     while(iterate) {
@@ -103,10 +85,10 @@ int main(int argc, char *argv[]) {
         print_matrix(Q);
         printf("\nR\n");
         print_matrix(R);
-        matmul_h(Q, R, QR);
+        mat_mul_mat_h(Q, R, QR);
         printf("\nQR\n");
         print_matrix(QR);
-        matmul_h(R, Q, A); // RQ
+        mat_mul_mat_h(R, Q, A); // RQ
         step++;
         iterate = 1;
         // check diagonal equality end condition

@@ -1,17 +1,15 @@
 //
-// Created by Mateusz Chojnowski on 30.03.2021.
+// Created by Mateusz Chojnowski on 11.05.2021.
 //
 
-#ifndef MATRIX_H_
-#define MATRIX_H_
 #include <stdlib.h>
-#include <assert.h>
 #include <stdio.h>
-
+#ifndef NUMERYCZNE_MATRIX_D_H
+#define NUMERYCZNE_MATRIX_D_H
 typedef struct matrix {
     const int rows;
     const int cols;
-    float* const * const data;
+    double* const * const data;
 } matrix;
 
 typedef enum parsing_code {
@@ -36,6 +34,7 @@ matrix mat_create_copy(matrix mat);
 void mat_move(const matrix *from, const matrix *to);
 void copy_values(matrix source, matrix target);
 void copy_column(matrix source, matrix target, int sourceColumn, int targetColumn);
+void copy_row(matrix source, matrix target, size_t sourceRow, size_t targetRow);
 void destroy_matrix(matrix mat);
 matrix mat_mul_mat(matrix a, matrix b);
 void mat_mul_mat_h(matrix a, matrix b, matrix output);
@@ -50,17 +49,20 @@ void doolitleLU(matrix source, matrix L_out, matrix U_out);
 void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out);
 void solve_forward(matrix left, matrix right, matrix output);
 void solve_backward(matrix left, matrix right, matrix output);
+void solve_backward_offset(matrix left, matrix right, matrix output, size_t offset);
 matrix solve_equation(matrix A, matrix free_terms);
 void invert_matrix_inplace(matrix mat);
-void mat_mul_scalar_inplace(matrix mat, float scalar);
+void mat_mul_scalar_inplace(matrix mat, double scalar);
+double mat_sum(matrix mat);
 void mat_neg_inplace(matrix mat);
-float mat_norm(matrix mat);
-float vec_norm(matrix vec);
-void diagonal(matrix mat, float diagonal_value);
+void mat_sub_mat_h(matrix left, matrix right, matrix output);
+double mat_norm(matrix mat);
+double vec_norm(matrix vec);
+void diagonal(matrix mat, double diagonal_value);
 parsing_result from_file(FILE* file);
 parsing_code readInt(FILE *file, int *out, char *buffer, unsigned int bufferSize);
 parsing_code maybeReadInt(FILE *file, int *out, char *buffer, unsigned int bufferSize);
-parsing_code readFloat(FILE *file, float *out, char *buffer, unsigned int bufferSize);
+parsing_code readDouble(FILE *file, double *out, char *buffer, const unsigned int bufferSize);
 parsing_code equationFromFile(FILE* file, matrix* mat, matrix* vec);
 void print_matrix(matrix mat);
-#endif // MATRIX_H_
+#endif //NUMERYCZNE_MATRIX_D_H

@@ -1,11 +1,12 @@
 //
-// Created by Mateusz Chojnowski on 30.03.2021.
+// Created by Mateusz Chojnowski on 11.05.2021.
 //
-
-#include "matrix.h"
+#include <stdio.h>
+#include <assert.h>
 #include <float.h>
 #include <math.h>
 #include <ctype.h>
+#include "matrix_d.h"
 
 const unsigned short bufferSize = 40;
 static int last_read_character = '\0';
@@ -14,11 +15,9 @@ matrix mat_create(int rows, int columns) {
     assert(rows > 0);
     assert(columns > 0);
     // creates matrix with allocated memory but uninitialized
-    float **data = malloc(sizeof(float*) * rows);
-
-    data = malloc(sizeof(float*) * rows);
+    double **data = malloc(sizeof(double*) * rows);
     for (int i = 0; i < rows; ++i) {
-        data[i] = malloc(sizeof(float ) * columns);
+        data[i] = malloc(sizeof(double) * columns);
     }
     matrix mat = { rows, columns, data };
     return mat;
@@ -28,9 +27,9 @@ matrix mat_create_zero(int rows, int columns) {
     assert(rows > 0);
     assert(columns > 0);
     // creates matrix with allocated memory but uninitialized
-    float **data = calloc(rows, sizeof(float*));
+    double **data = calloc(rows, sizeof(double*));
     for (int i = 0; i < rows; ++i) {
-        data[i] = calloc(columns, sizeof(float));
+        data[i] = calloc(columns, sizeof(double));
     }
     matrix mat = {rows, columns, data};
     return mat;
@@ -39,7 +38,7 @@ matrix mat_create_zero(int rows, int columns) {
 matrix mat_create_identity(size_t size) {
     matrix returned = mat_create_zero(size, size);
     for (int i = 0; i < size; ++i) {
-        returned.data[i][i] = 1.0f;
+        returned.data[i][i] = 1.0;
     }
     return returned;
 }
@@ -59,8 +58,8 @@ void mat_move(const matrix *from, const matrix *to) {
     destroy_matrix(*to);
     *(int*) &to->rows = (int) from->rows;
     *(int*) &to->cols = (int) from->cols;
-    *(float***) &(to->data) = (float**) from->data;
-    *(float***) &(from->data) = NULL;
+    *(double***) &(to->data) = (double**) from->data;
+    *(double***) &(from->data) = NULL;
 }
 
 void copy_values(matrix source, matrix target) {
@@ -82,6 +81,14 @@ void copy_column(matrix source, matrix target, int sourceColumn, int targetColum
     }
 }
 
+void copy_row(matrix source, matrix target, size_t sourceRow, size_t targetRow) {
+    assert(sourceRow >= 0 && targetRow >= 0);
+    assert(sourceRow < source.rows && targetRow < target.rows);
+    assert(source.cols == target.cols);
+    for (int col = 0; col < source.rows; ++col)
+        target.data[targetRow][col] = source.data[sourceRow][col];
+}
+
 void destroy_matrix(matrix mat) {
     if (mat.data != NULL) {
         for (int i = 0; i < mat.rows; ++i) {
@@ -89,11 +96,11 @@ void destroy_matrix(matrix mat) {
                 free(mat.data[i]);
             }
         }
-        free((float **) mat.data);
+        free((double **) mat.data);
     }
     *((int*) &mat.rows) = -1;
     *((int*) &mat.cols) = -1;
-    *((float***) &mat.data) = NULL;
+    *((double***) &mat.data) = NULL;
 }
 
 matrix mat_mul_mat(matrix a, matrix b) {
@@ -104,15 +111,26 @@ matrix mat_mul_mat(matrix a, matrix b) {
 }
 
 void mat_mul_mat_h(matrix a, matrix b, matrix output) {
-    assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
+    // assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
+    double sum = 0;
     for (int r = 0; r < output.rows; ++r) {
         for (int c = 0; c < output.cols; ++c) {
-            output.data[r][c] = 0.0f;
-            for (int i = 0; i < a.rows; ++i) {
-                output.data[r][c] += a.data[r][i] * b.data[i][c];
+            sum = 0.0;
+            for (int i = 0; i < a.cols; ++i) {
+                double temp = a.data[r][i] * b.data[i][c];
+                sum += temp;
             }
+            output.data[r][c] = sum;
         }
     }
+}
+
+void mat_sub_mat_h(matrix left, matrix right, matrix output) {
+    assert(left.cols == right.cols && left.cols == output.cols);
+    assert(left.rows == right.rows && left.cols == output.cols);
+    for(int i = 0; i < left.rows; ++i)
+        for (int j = 0; j < left.cols; ++j)
+            output.data[i][j] = left.data[i][j] - right.data[i][j];
 }
 
 matrix transpose(matrix mat) {
@@ -136,7 +154,7 @@ void transpose_h(matrix transposed, matrix output) {
 }
 
 void transpose_inplace(matrix mat) {
-    float temp;
+    double temp;
     for (int row = 0; row < mat.rows; ++row) {
         for (int col = 0; col < row; ++col) {
             temp = mat.data[row][col];
@@ -149,7 +167,7 @@ void transpose_inplace(matrix mat) {
 void swap_cols(matrix mat, int a, int b) {
     if (a == b)
         return;
-    float tmp;
+    double tmp;
     for (int i = 0; i < mat.rows; ++i) {
         tmp = mat.data[i][a];
         mat.data[i][a] = mat.data[i][b];
@@ -160,7 +178,7 @@ void swap_cols(matrix mat, int a, int b) {
 void swap_rows(matrix mat, int a, int b) {
     if (a == b)
         return;
-    float tmp;
+    double tmp;
     for (int i = 0; i < mat.cols; ++i) {
         tmp = mat.data[a][i];
         mat.data[a][i] = mat.data[b][i];
@@ -171,30 +189,30 @@ void swap_rows(matrix mat, int a, int b) {
 void zero_matrix(matrix mat) {
     for (int i = 0; i < mat.rows; ++i)
         for (int j = 0; j < mat.cols; ++j)
-            mat.data[i][j] = 0.0f;
+            mat.data[i][j] = 0.0;
 }
 
 // makes LU decomposition - L matrix and U matrix should be created with appropriate size before calling function
 void doolitleLU(matrix source, matrix L_out, matrix U_out) {
     const int n = source.rows;
-    float sum;
+    double sum;
     assert(n == L_out.rows && n == U_out.rows);
     assert(n == L_out.cols && n == U_out.cols);
     assert(source.cols == n);
     // fill L matrix with 1 on diagonal
     for (int i = 0; i < source.rows; ++i)
-        L_out.data[i][i] = 1.0f;
+        L_out.data[i][i] = 1.0;
     for (int k = 0; k < n; ++k) {
         // fill row
         for(int j = k; j < n; ++j) {
-            sum = 0.0f;
+            sum = 0.0;
             for (int p = 0; p < k; ++p)
                 sum += L_out.data[k][p] * U_out.data[p][j];
             U_out.data[k][j] = source.data[k][j] - sum;
         }
         // fill column
         for (int i = k + 1; i < n; ++i) {
-            sum = 0.0f;
+            sum = 0.0;
             for (int p = 0; p < k; ++p)
                 sum += L_out.data[i][p] * U_out.data[p][k];
             L_out.data[i][k] = (source.data[i][k] - sum) / U_out.data[k][k];
@@ -206,28 +224,28 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
     // makes LUP decomposition - L, P and U matrix should be created with appropriate size and zeroed before calling function
     // WARNING: changes source matrix
     const int n = source.rows;
-    float sum;
+    double sum;
     assert(n == L_out.rows && n == U_out.rows);
     assert(n == L_out.cols && n == U_out.cols);
     assert(source.cols == n);
     // fill L matrix with 1 on diagonal
     for (int i = 0; i < source.rows; ++i) {
-        L_out.data[i][i] = 1.0f;
-        P_out.data[i][i] = 1.0f;
+        L_out.data[i][i] = 1.0;
+        P_out.data[i][i] = 1.0;
     }
     for (int k = 0; k < n; ++k) {
         // fill row
         for(int j = k; j < n; ++j) {
-            sum = 0.0f;
+            sum = 0.0;
             for (int p = 0; p < k; ++p)
                 sum += L_out.data[k][p] * U_out.data[p][j];
             U_out.data[k][j] = source.data[k][j] - sum;
         }
         // find max col index in k row
-        float max_value = FLT_MIN;
+        double max_value = DBL_MIN;
         int max_index = -1;
         for (int i = k; i < n; ++i) {
-            float curr_value = fabs(U_out.data[k][i]);
+            double curr_value = fabs(U_out.data[k][i]);
             if (curr_value > max_value) {
                 max_value = curr_value;
                 max_index = i;
@@ -240,7 +258,7 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
         }
         // fill column
         for (int i = k + 1; i < n; ++i) {
-            sum = 0.0f;
+            sum = 0.0;
             for (int p = 0; p < k; ++p)
                 sum += L_out.data[i][p] * U_out.data[p][k];
             L_out.data[i][k] = (source.data[i][k] - sum) / U_out.data[k][k];
@@ -251,7 +269,7 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
 void solve_forward(matrix left, matrix right, matrix output) {
     assert(right.cols == output.cols && right.rows == output.rows);
     for (int row = 0; row < left.rows; ++row) {
-        float b_val = right.data[row][0];
+        double b_val = right.data[row][0];
         for (int col = 0; col < row; ++col) {
             b_val -= left.data[row][col] * output.data[col][0];
         }
@@ -260,9 +278,13 @@ void solve_forward(matrix left, matrix right, matrix output) {
 }
 
 void solve_backward(matrix left, matrix right, matrix output) {
+    solve_backward_offset(left, right, output, 0);
+}
+
+void solve_backward_offset(matrix left, matrix right, matrix output, size_t offset) {
     assert(right.cols == output.cols && right.rows == output.rows);
-    for (int row = left.rows - 1; row >= 0 ; --row) {
-        float y_val = right.data[row][0];
+    for (int row = left.rows - 1 - offset; row >= 0 ; --row) {
+        double y_val = right.data[row][0];
         for (int col = left.cols - 1; col > row; --col) {
             y_val -= left.data[row][col] * output.data[col][0];
         }
@@ -296,12 +318,12 @@ void invert_matrix_inplace(matrix mat) {
     matrix supp_vec = mat_create_zero(L.rows, 1), copy_col_vec = mat_create_zero(L.rows, 1);
     // invert L and U
     for (int col = 0; col < L.cols; ++col) {
-        supp_vec.data[col][0] = 1.0f;
+        supp_vec.data[col][0] = 1.0;
         solve_forward(L, supp_vec, copy_col_vec);
         copy_column(copy_col_vec, L_inverted, 0, col);
         solve_backward(U, supp_vec, copy_col_vec);
         copy_column(copy_col_vec, U_inverted, 0, col);
-        supp_vec.data[col][0] = 0.0f;
+        supp_vec.data[col][0] = 0.0;
     }
     transpose_inplace(P);
     mat_mul_mat_h(P, U_inverted, U);
@@ -315,10 +337,18 @@ void invert_matrix_inplace(matrix mat) {
     destroy_matrix(copy_col_vec);
 }
 
-void mat_mul_scalar_inplace(matrix mat, float scalar) {
+void mat_mul_scalar_inplace(matrix mat, double scalar) {
     for (int i = 0; i < mat.rows; ++i)
         for (int j = 0; j < mat.cols; ++j)
             mat.data[i][j] *= scalar;
+}
+
+double mat_sum(matrix mat) {
+    double sum = 0.0;
+    for (int i = 0; i < mat.rows; ++i)
+        for (int j = 0; j < mat.cols; ++j)
+            sum += fabs(mat.data[i][j]);
+    return sum;
 }
 
 void mat_neg_inplace(matrix mat) {
@@ -327,11 +357,11 @@ void mat_neg_inplace(matrix mat) {
             mat.data[i][j] = -mat.data[i][j];
 }
 
-float mat_norm(matrix mat) {
+double mat_norm(matrix mat) {
     // 1
-    float _norm = 0.0f;
+    double _norm = 0.0;
     for (int row = 0; row < mat.rows; ++row) {
-        float colsum = 0.0f;
+        double colsum = 0.0;
         for (int col = 0; col < mat.cols; ++col) {
             colsum += fabs(mat.data[row][col]);
         }
@@ -341,20 +371,20 @@ float mat_norm(matrix mat) {
     return _norm;
 }
 
-float vec_norm(matrix vec) {
+double vec_norm(matrix vec) {
     assert(vec.cols == 1);
-    float sum = 0.0f;
+    double sum = 0.0;
     for (int row = 0; row < vec.rows; ++row) {
         sum += fabs(vec.data[row][0]);
     }
     return sum;
 }
 
-void diagonal(matrix mat, float diagonal_value) {
+void diagonal(matrix mat, double diagonal_value) {
     for (int row = 0; row < mat.rows; ++row) {
         for (int col = 0; col < mat.cols; ++col) {
             if (row != col)
-                mat.data[row][col] = 0.0f;
+                mat.data[row][col] = 0.0;
             else
                 mat.data[row][col] = diagonal_value;
         }
@@ -389,9 +419,9 @@ parsing_result from_file(FILE* file) {
     matrix result_matrix = mat_create(parsed_rows, parsed_cols);
     int row = 0;
     int col = 0;
-    float parsedf = 0.0f;
+    double parsedf = 0.0;
     while (!feof(file)) {
-        code = readFloat(file, &parsedf, buffer, bufferSize);
+        code = readDouble(file, &parsedf, buffer, bufferSize);
         if (code != CORRECT)
         {
             break;
@@ -434,8 +464,8 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec) {
     // fill matrix
     for (int row = 0; row < mat_temp.rows; ++row) {
         for (int col = 0; col < mat_temp.cols; ++col) {
-            float val = 0.0f;
-            if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
+            double val = 0.0;
+            if (readDouble(file, &val, buffer, bufferSize) != CORRECT) {
                 printf("Error during parsing matrix at (%i, %i)", row, col);
                 destroy_matrix(mat_temp);
                 destroy_matrix(vec_temp);
@@ -447,8 +477,8 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec) {
     // fill b vector
     for (int row = 0; row < vec_temp.rows; ++row) {
         for (int col = 0; col < vec_temp.cols; ++col) {
-            float val = 0.0f;
-            if (readFloat(file, &val, buffer, bufferSize) != CORRECT) {
+            double val = 0.0;
+            if (readDouble(file, &val, buffer, bufferSize) != CORRECT) {
                 printf("Error during parsing matrix at (%i, %i)", row, col);
                 destroy_matrix(mat_temp);
                 destroy_matrix(vec_temp);
@@ -465,13 +495,13 @@ parsing_code equationFromFile(FILE *file, matrix *mat, matrix *vec) {
 void print_matrix(matrix mat) {
     for (int i = 0; i < mat.rows; ++i) {
         for (int j = 0; j < mat.cols; ++j) {
-            printf("%f ", mat.data[i][j]);
+            printf("%e ", mat.data[i][j]);
         }
         printf("\n");
     }
 }
 
-parsing_code readFloat(FILE* file, float *out, char *buffer, const unsigned  int bufferSize) {
+parsing_code readDouble(FILE* file, double *out, char *buffer, const unsigned  int bufferSize) {
     while(!(isalnum(last_read_character) || last_read_character == '.' || last_read_character == '-' || last_read_character == '+')) {
         last_read_character = fgetc(file);
     }
@@ -483,8 +513,8 @@ parsing_code readFloat(FILE* file, float *out, char *buffer, const unsigned  int
     if(current_buffer_position == bufferSize - 1)
         return BUFFER_OVERFLOW;
     buffer[current_buffer_position++] = '\0';
-    *out = strtof(buffer, NULL);
-    if(*out == 0.0f && buffer[0] != '0') { // probably invalid value parsed
+    *out = strtod(buffer, NULL);
+    if(*out == 0.0 && buffer[0] != '0') { // probably invalid value parsed
         return MATRIX_VALUE_PARSING_ERROR;
     }
     return CORRECT;

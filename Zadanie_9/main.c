@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
         return 2;
     }
     matrix A = parsingResult.output_matrix;
-    matrix zero_vec = create_zero_matrix(A.cols, 1);
+    matrix zero_vec = mat_create_zero(A.cols, 1);
     array eigenvalues = create_array(argc - 2);
     for (int i = 2; i < argc; ++i)
         eigenvalues.data[i - 2] = strtof(argv[i], NULL);
@@ -35,8 +35,9 @@ int main(int argc, char *argv[]) {
     printf("\neigenvalues\n");
     print_array(eigenvalues);
     // algorytm 2
-    matrix L = create_matrix(A.rows, A.cols), U = create_matrix(A.rows, A.cols), P = create_matrix(A.rows, A.cols), A_lambda = create_matrix(A.rows, A.cols);
-    matrix x_prim = create_matrix(A.cols, 1);
+    matrix L = mat_create(A.rows, A.cols), U = mat_create(A.rows, A.cols), P = mat_create(A.rows, A.cols), A_lambda = mat_create(
+            A.rows, A.cols);
+    matrix x_prim = mat_create(A.cols, 1);
     for (int i = 0; i < eigenvalues.size; ++i) {
         float eigenvalue = eigenvalues.data[i];
         printf("\nEigenvalue: %f", eigenvalue);
@@ -58,10 +59,10 @@ int main(int argc, char *argv[]) {
             x_prim.data[row][0] = y_val / U.data[row][row];
         }
         transpose_inplace(P);
-        matmul_h(P, x_prim, zero_vec);
+        mat_mul_mat_h(P, x_prim, zero_vec);
         printf("\nEigenvector (x_i)\n");
         print_matrix(zero_vec);
-        matmul_h(A, zero_vec, x_prim);
+        mat_mul_mat_h(A, zero_vec, x_prim);
         printf("\nA * x_i\n");
         print_matrix(x_prim);
         matmul_scalar_inplace(zero_vec, eigenvalue);

@@ -60,8 +60,8 @@ int main(int argc, char* argv[]) {
             return 2;
         }
     }
-    matrix A = create_matrix(x.size, degree);
-    matrix b = create_matrix(y.size, 1);
+    matrix A = mat_create(x.size, degree);
+    matrix b = mat_create(y.size, 1);
     for (int row = 0; row < A.rows; ++row) {
         for (int col = 0; col < A.cols; ++col) {
             A.data[row][col] = function(x.data[row], (float) col) / sigma.data[row];
@@ -73,16 +73,16 @@ int main(int argc, char* argv[]) {
     printf("\nb\n");
     print_matrix(b);
     matrix AT = transpose(A);
-    matrix alpha = matmul(AT, A);
+    matrix alpha = mat_mul_mat(AT, A);
     printf("\nalpha\n");
     print_matrix(alpha);
-    matrix alpha_inv = copy_matrix(alpha);
-    matrix beta = matmul(AT, b);
+    matrix alpha_inv = mat_create_copy(alpha);
+    matrix beta = mat_mul_mat(AT, b);
     matrix a = solve_equation(alpha, beta);
     printf("\ncoefficients (from lowest to highest)\n");
     print_matrix(a);
     invert_matrix_inplace(alpha_inv);
-    printf("\ncond(alpha) = %f\n", norm(alpha) * norm(alpha_inv));
+    printf("\ncond(alpha) = %f\n", mat_norm(alpha) * mat_norm(alpha_inv));
     float chi = 0;
     // calculate chi^2
     for (int i = 0; i < y.size; ++i) {

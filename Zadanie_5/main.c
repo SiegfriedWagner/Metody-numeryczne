@@ -16,7 +16,8 @@ int main(int argc, char *argv[]) {
         printf("Error during parsing input file");
         return 2;
     }
-    matrix L = create_zero_matrix(mat.rows, mat.cols), U = create_zero_matrix(mat.rows, mat.cols), P = create_zero_matrix(mat.rows, mat.cols);
+    matrix L = mat_create_zero(mat.rows, mat.cols), U = mat_create_zero(mat.rows, mat.cols), P = mat_create_zero(
+            mat.rows, mat.cols);
     printf("A\n");
     print_matrix(mat);
     printf("\nB\n");
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
     printf("\nP:\n");
     print_matrix(P);
 
-    matrix vec2 = create_zero_matrix(vec1.rows, 1);
+    matrix vec2 = mat_create_zero(vec1.rows, 1);
     solve_forward(L, vec1, vec2);
     printf("\nY:\n");
     print_matrix(vec2);
@@ -37,12 +38,12 @@ int main(int argc, char *argv[]) {
     printf("\nX'\n");
     print_matrix(vec1);
     transpose_inplace(P);
-    matrix x = matmul(P, vec1);
+    matrix x = mat_mul_mat(P, vec1);
     printf("\nX\n");
     print_matrix(x);
     printf("\nA*P^T*X\n");
-    matrix AP = matmul(mat, P);
-    matrix APX = matmul(AP, x);
+    matrix AP = mat_mul_mat(mat, P);
+    matrix APX = mat_mul_mat(AP, x);
     print_matrix(APX);
     destroy_matrix(APX);
     destroy_matrix(AP);
