@@ -27,8 +27,10 @@ void QRdecomposition(matrix A, matrix Q, matrix R) {
             alpha += x_k.data[i] * x_k.data[i];
         }
         alpha = sqrtf(alpha);
+        if (A.data[k][k] > 0)
+            alpha = -alpha;
         // Based on wikipedia
-        // x_k == x
+        // x_k == v
         x_k.data[0] -= alpha; // u = x - alpha * e_1
         // v = u / ||u||
         float dotprod2 = 2 / arrdot(x_k, x_k);

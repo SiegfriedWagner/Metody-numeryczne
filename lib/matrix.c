@@ -105,10 +105,10 @@ matrix mat_mul_mat(matrix a, matrix b) {
 
 void mat_mul_mat_h(matrix a, matrix b, matrix output) {
     assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
-    for (int r = 0; r < output.rows; ++r) {
-        for (int c = 0; c < output.cols; ++c) {
+    for (int r = 0; r < a.rows; ++r) {
+        for (int c = 0; c < b.cols; ++c) {
             output.data[r][c] = 0.0f;
-            for (int i = 0; i < a.cols; ++i) {
+            for (int i = 0; i < b.rows; ++i) {
                 output.data[r][c] += a.data[r][i] * b.data[i][c];
             }
         }
@@ -227,7 +227,7 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
         float max_value = FLT_MIN;
         int max_index = -1;
         for (int i = k; i < n; ++i) {
-            float curr_value = fabs(U_out.data[k][i]);
+            float curr_value = fabsf(U_out.data[k][i]);
             if (curr_value > max_value) {
                 max_value = curr_value;
                 max_index = i;

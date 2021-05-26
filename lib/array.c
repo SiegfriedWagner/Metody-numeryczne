@@ -48,7 +48,7 @@ void destroy_array(array arr) {
 
 void print_array(array arr) {
     for (int i = 0; i < arr.size; ++i) {
-        printf("%f ", arr.data[i]);
+        printf("%e ", arr.data[i]);
     }
     printf("\n");
 }

@@ -111,19 +111,17 @@ matrix mat_mul_mat(matrix a, matrix b) {
 }
 
 void mat_mul_mat_h(matrix a, matrix b, matrix output) {
-    // assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
+    assert(a.cols == b.rows && output.rows == a.rows && output.cols == b.cols);
     double sum = 0;
-    for (int r = 0; r < output.rows; ++r) {
-        for (int c = 0; c < output.cols; ++c) {
-            sum = 0.0;
-            for (int i = 0; i < a.cols; ++i) {
-                double temp = a.data[r][i] * b.data[i][c];
-                sum += temp;
-            }
-            output.data[r][c] = sum;
+    for (int r = 0; r < a.rows; ++r) {
+        for (int c = 0; c < b.cols; ++c) {
+            output.data[r][c]= 0.0;
+            for (int i = 0; i < b.rows; ++i)
+                output.data[r][c] += a.data[r][i] * b.data[i][c];
         }
     }
 }
+
 
 void mat_sub_mat_h(matrix left, matrix right, matrix output) {
     assert(left.cols == right.cols && left.cols == output.cols);
@@ -254,7 +252,8 @@ void doolitleLUP(matrix source, matrix L_out, matrix U_out, matrix P_out) {
         if(max_index > 0) {
             swap_cols(source, k, max_index);
             swap_cols(U_out, k, max_index);
-            swap_rows(P_out, k, max_index);
+            // swap_rows(P_out, k, max_index);
+            swap_cols(P_out, k, max_index); // I have no idea what happens here
         }
         // fill column
         for (int i = k + 1; i < n; ++i) {
@@ -284,11 +283,11 @@ void solve_backward(matrix left, matrix right, matrix output) {
 void solve_backward_offset(matrix left, matrix right, matrix output, size_t offset) {
     assert(right.cols == output.cols && right.rows == output.rows);
     for (int row = left.rows - 1 - offset; row >= 0 ; --row) {
-        double y_val = right.data[row][0];
-        for (int col = left.cols - 1; col > row; --col) {
+        double y_val = 0.0;
+        // for (int col = left.cols - 1; col > row; --col) {
+        for(int col = row + 1; col < left.rows; col++)
             y_val -= left.data[row][col] * output.data[col][0];
-        }
-        output.data[row][0] = y_val / left.data[row][row];
+        output.data[row][0] = (0.0 - y_val) / left.data[row][row];
     }
 }
 
