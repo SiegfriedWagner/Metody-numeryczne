@@ -108,7 +108,7 @@ void mat_mul_mat_h(matrix a, matrix b, matrix output) {
     for (int r = 0; r < output.rows; ++r) {
         for (int c = 0; c < output.cols; ++c) {
             output.data[r][c] = 0.0f;
-            for (int i = 0; i < a.rows; ++i) {
+            for (int i = 0; i < a.cols; ++i) {
                 output.data[r][c] += a.data[r][i] * b.data[i][c];
             }
         }
@@ -345,7 +345,7 @@ float vec_norm(matrix vec) {
     assert(vec.cols == 1);
     float sum = 0.0f;
     for (int row = 0; row < vec.rows; ++row) {
-        sum += fabs(vec.data[row][0]);
+        sum += vec.data[row][0];
     }
     return sum;
 }

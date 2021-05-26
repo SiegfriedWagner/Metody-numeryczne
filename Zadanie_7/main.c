@@ -60,6 +60,9 @@ int main(int argc, char* argv[]) {
             return 2;
         }
     }
+    print_array(x);
+    print_array(y);
+    print_array(sigma);
     matrix A = mat_create(x.size, degree);
     matrix b = mat_create(y.size, 1);
     for (int row = 0; row < A.rows; ++row) {
