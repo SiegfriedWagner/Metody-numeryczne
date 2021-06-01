@@ -1,10 +1,7 @@
-import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import simps
 from haar import *
-import scipy as sc
-from numba import jit
-from function import fun, period
+from function import fun
 plt.rcParams['figure.figsize'] = [12, 8]
 plt.rcParams['figure.dpi'] = 100 # 200 e.g. is really fine, but slower
 
@@ -21,7 +18,7 @@ plt.plot(x, y)
 plt.ylabel("f(t)")
 plt.xlabel("t[s]")
 plt.title(f"Przebieg sygnału w funkcji czasu (częstotliwość próbkowania {sampling_frequency}Hz)")
-plt.show(block=False)
+plt.show()
 
 # FOURIER TRANSFORM
 ft = np.fft.fft(y)
@@ -36,7 +33,7 @@ print("Fourier transform")
 print(f"Most freq [Hz]: {tfreqfft}")
 periodfft = 1 / (tfreqfft)
 print(f"Period[s]: {periodfft}")
-plt.show(block=False)
+plt.show()
 
 # RECREATING FUNCTION FROM FOURIER TRANSFORM
 samples = sampling_frequency*range_end

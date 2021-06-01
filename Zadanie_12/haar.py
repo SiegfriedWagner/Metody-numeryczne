@@ -21,6 +21,55 @@ def haar(original_signal: np.ndarray, n: int):
     return result
 
 
+# @jit(parallel=True)
+def haar2d(original_signal: np.ndarray, n: int):
+    original_signal = original_signal.copy()
+    rows = original_signal.shape[0]
+    cols = original_signal.shape[1]
+    for _ in range(n):
+        new_col = cols // 2
+        for row in range(rows):
+            a = calc_next_am(original_signal[row, :cols])
+            d = calc_next_dm(original_signal[row, :cols])
+            original_signal[row, :new_col] = a
+            original_signal[row, new_col:cols] = d
+        cols = new_col
+        new_row = rows // 2
+        for col in range(cols):
+            a = calc_next_am(original_signal[:rows, col])
+            d = calc_next_dm(original_signal[:rows, col])
+            original_signal[:new_row, col] = a
+            original_signal[new_row:rows, col] = d
+        rows = new_row
+    return original_signal
+
+
+def recreate_signal2d(signal: np.ndarray, n: int):
+    k = pow(2, n)
+    rows = signal.shape[0] // k
+    cols = signal.shape[1] // k
+    for _ in range(n):
+        new_rows = rows * 2
+        col_array = np.zeros(new_rows)
+        for col in range(cols):
+            col_array[::2] = signal[:rows, col]
+            col_array[1::2] = signal[:rows, col]
+            col_array[::2] += signal[rows:new_rows, col]
+            col_array[1::2] -= signal[rows:new_rows, col]
+            signal[:new_rows, col] = col_array
+        rows = new_rows
+        new_cols = cols * 2
+        row_array = np.zeros(new_cols)
+        for row in range(rows):
+            row_array[::2] = signal[row, :cols]
+            row_array[1::2] = signal[row, :cols]
+            row_array[::2] += signal[row, cols:new_cols]
+            row_array[1::2] -= signal[row, cols:new_cols]
+            signal[row, :new_cols] = row_array
+        cols = new_cols
+    return signal
+
+
 def gen_v(k: int, n: int) -> np.array:
     k2 = pow(2, k)
     arr = np.zeros((n // k2, n))
